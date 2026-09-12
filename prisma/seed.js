@@ -4,8 +4,8 @@ const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
 async function main() {
-  const username = process.env.SEED_STAFF_USER || "vic";
-  const password = process.env.SEED_STAFF_PASS || "5223";
+  const username = process.env.SEED_STAFF_USER || "admin";
+  const password = process.env.SEED_STAFF_PASS || "canvia-aquesta-contrasenya";
 
   const existing = await prisma.staff.findUnique({ where: { username } });
   if (existing) {

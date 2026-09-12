@@ -18,11 +18,11 @@ Tecnologies: **Next.js 14 (App Router)** + **Prisma/Postgres** + **NextAuth** + 
 - Compte de [GitHub](https://github.com) (per connectar el repo a Vercel).
 - Node.js 18+ instal·lat si vols provar-ho en local.
 
-## 2. Crear la base de dades (gratuïta)
+## 2. Base de dades
 
-1. Al dashboard de Vercel del teu projecte: **Storage → Create Database → Postgres** (Neon).
-2. Un cop creada, Vercel et donarà les variables `DATABASE_URL` i `DIRECT_URL` (o `POSTGRES_PRISMA_URL` / `POSTGRES_URL_NON_POOLING`, segons la integració — ajusta els noms a `.env` si cal). Copia-les.
-3. També pots crear-la directament a [neon.tech](https://neon.tech) (pla gratuït) si ho prefereixes independent de Vercel.
+Si ja has creat un "Storage" de tipus **Prisma Postgres** des de Vercel (Storage → Create Database), no cal fer res més: Vercel genera automàticament una variable d'entorn amb el prefix del nom que li vas posar, per exemple si el vas anomenar `comissioBD` la variable es diu **`BD_POSTGRES_URL`**, i el projecte ja està configurat per fer-la servir (`prisma/schema.prisma`).
+
+Si li has posat un altre nom al Storage, ves a **Storage → el teu Storage → Quickstart** i mira quin és el nom exacte de la variable que acaba en `_POSTGRES_URL`; si no coincideix amb `BD_POSTGRES_URL`, edita `prisma/schema.prisma` i canvia `env("BD_POSTGRES_URL")` pel nom correcte.
 
 ## 3. Crear l'emmagatzematge del logo (Vercel Blob)
 
@@ -34,18 +34,37 @@ Tecnologies: **Next.js 14 (App Router)** + **Prisma/Postgres** + **NextAuth** + 
 Copia `.env.example` a `.env` (per treballar en local) i omple:
 
 ```
-DATABASE_URL=...
-DIRECT_URL=...
+BD_POSTGRES_URL=...      # ja la tens si has creat el Storage des de Vercel
 NEXTAUTH_SECRET=...      # genera'n una amb: openssl rand -base64 32
 NEXTAUTH_URL=http://localhost:3000   # a producció, la URL del teu domini de Vercel
 BLOB_READ_WRITE_TOKEN=...
 SEED_STAFF_USER=admin
 SEED_STAFF_PASS=canvia-aquesta-contrasenya
+SETUP_SECRET=...
 ```
 
 A Vercel, aquestes mateixes variables s'han de configurar a **Project Settings → Environment Variables**.
 
-## 5. Instal·lació en local (opcional, per provar abans de desplegar)
+## 5. Desplegar directament des de GitHub + Vercel (sense entorn local)
+
+Aquest és el camí recomanat si no vols instal·lar res al teu ordinador:
+
+1. Puja aquest projecte a un repositori de GitHub.
+2. A Vercel: **Add New → Project → importa el repositori**.
+3. A **Project Settings → Environment Variables**, afegeix totes les variables del pas 4, incloent-hi `SETUP_SECRET` (inventa't una cadena llarga i aleatòria, per exemple `a1b2c3-clau-temporal-xyz`).
+4. Desplega. Gràcies al script de `build` (`prisma generate && prisma db push && next build`), **les taules de la base de dades es creen soles a cada desplegament** — no cal fer res més per això.
+5. Un cop el desplegament acabi, **visita una sola vegada** aquesta URL al navegador (canvia el domini i els valors):
+
+   ```
+   https://el-teu-domini.vercel.app/api/setup?secret=LA_TEVA_SETUP_SECRET&username=admin&password=una-contrasenya-forta&nom=Administrador
+   ```
+
+   Això crea el primer usuari de **staff**. Si tot ha anat bé, veuràs un missatge JSON de confirmació.
+6. **Important:** un cop creat, esborra la variable `SETUP_SECRET` del projecte a Vercel (o canvia-li el valor) i torna a desplegar, perquè aquesta ruta deixi de ser accessible. Per seguretat, la ruta ja rebutja crear més usuaris si ja n'hi ha algun, però és millor tancar-la del tot.
+
+## 6. Instal·lació en local (alternativa, opcional)
+
+Si en algun moment vols treballar-hi en local:
 
 ```bash
 npm install
@@ -56,22 +75,11 @@ npm run dev
 
 Obre http://localhost:3000
 
-## 6. Desplegar a Vercel
-
-1. Puja aquest projecte a un repositori de GitHub.
-2. A Vercel: **Add New → Project → importa el repositori**.
-3. Afegeix les variables d'entorn (pas 4) al projecte de Vercel.
-4. Desplega. Vercel executarà automàticament `prisma generate` (via `postinstall`) i `next build`.
-5. Un cop desplegat, connecta't per SSH... en realitat no cal SSH: pots executar `npm run db:push` i `npm run db:seed` **en local** apuntant al `DATABASE_URL` de producció (posa'l temporalment al teu `.env` local), per crear les taules i l'usuari admin inicial a la base de dades de producció.
-
 ## 7. Primer accés com a staff
 
-Un cop fet el `db:seed`, entra a `/login` amb:
+Entra a `/login` amb l'usuari i la contrasenya que hagis fet servir a `/api/setup` (o al `db:seed` si has anat per la via local).
 
-- Usuari: el valor de `SEED_STAFF_USER` (per defecte `admin`)
-- Contrasenya: el valor de `SEED_STAFF_PASS`
-
-Des del panell (`/panel` → pestanya "Staff") pots crear altres usuaris de staff i eliminar-ne.
+Des del panell (`/panel` → pestanya "Staff") pots crear altres usuaris de staff i eliminar-ne, sense necessitat de tornar a fer servir `/api/setup`.
 
 ## 8. Estructura del projecte
 
