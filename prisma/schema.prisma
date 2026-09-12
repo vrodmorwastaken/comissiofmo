@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Penya {
+  id           String   @id @default(cuid())
+  nombre       String
+  logoUrl      String
+  color        String
+  youtubeLink  String
+  normasOk     Boolean  @default(false)
+  username     String   @unique
+  passwordHash String
+  estat        String   @default("activa")
+  createdAt    DateTime @default(now())
+}
+
+model Staff {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  nom          String   @default("")
+  createdAt    DateTime @default(now())
+}
